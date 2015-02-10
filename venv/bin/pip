@@ -1,4 +1,4 @@
-#!/home/fonorobert/Projects/thermalprint/venv/bin/python3
+#!/home/fonorobert/Projects/thermalprint/venv/bin/python2
 
 # -*- coding: utf-8 -*-
 import re

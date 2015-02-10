@@ -1,3 +1,4 @@
+#!venv/bin/python
 # -*- coding: UTF-8 -*-
 import sys
 sys.path.append('python-escpos')
@@ -23,13 +24,11 @@ for chunk in list:
 
 
 Epson = printer.Usb(0x04b8, 0x0e15)
-Epson.set(align="center", font="A")
-Epson.set(char='int')
+Epson.set(align="center", font="A", char='int')
 Epson.control('LF')
 Epson.control('LF')
 
 for line in lines:
-    print str(lines.index(line)) + ' ' + line
     Epson.text(line)
     Epson.control('LF')
 Epson.control('LF')
@@ -39,6 +38,4 @@ Epson.control('LF')
 Epson.control('LF')
 Epson.control('LF')
 
-#Epson.barcode('1324354657687','EAN13',64,3,'BELOW','A')
-#Epson.qr('Hey yo bitches')
 Epson.cut()
