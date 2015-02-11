@@ -6,6 +6,7 @@ sys.path.append('python-escpos')
 from escposmod import *
 
 from utility import linebreak, i18n
+import configparser
 
 
 string = 'Fertőzőbb kőbányák tangóharmonikák szennyeződés műtők apanázs vakulásig gyilkosság trombitaművészek brácsák egymilliárd kócsagok kávédaráló mágikus támadó alakként görkorcsolyák délutáni kényelem legcsevegőbb. Borogatások vasút átkelő legeslegdühösebb Hermész sajtó fahéjfái múzeum indoeurópai holdvilág köpenyek kánkánok nem beszélek angolul bordás hatvány hetvennégy állami differenciálgeometria sárgállik melírozás. Ünnepnapok tüzel pakisztániak erdészek előleg antonimák agáig változók destruktív utcaseprők szürke gém fülesek látássá megszállottabb dodekaéder étlen pénzt hírnök ragadós esküvői ruha. '
