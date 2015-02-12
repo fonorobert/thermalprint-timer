@@ -2,14 +2,30 @@
 
 import sys
 sys.path.append('python-escpos')
-import argparse
 from escpos import *
-from utility import linebreak
+#from utility import linebreak
+
+from flask import Flask, request, jsonify
+
+Epson = printer.Usb(0x04b8, 0x0e15)
+
+def linebreak(string, charlimit=48):
+    if len(string) < charlimit:
+        return string
+    else:
+        words = string.split(' ')
+        chunks = ['']
+        for word in words:
+            if chunks == [] or len(chunks[-1])+len(word) > charlimit:
+                chunks.append(word + ' ')
+            else:
+                chunks[-1] += word + ' '
+        return chunks
 
 
 def _print_text(string, width=48):
     printable = linebreak(string, width)
-    if isinstance(printable, str):
+    if isinstance(printable, basestring):
         Epson.text(printable)
     else:
         for line in printable:
@@ -39,7 +55,7 @@ def print_header(string, imgpath=None, string2=False, border="=*=|", width=48):
 
     _print_text(string)
 
-    if isinstance(string2, str):
+    if isinstance(string2, basestring):
         Epson.control('LF')
         Epson.control('LF')
         _print_text(string2)
@@ -74,7 +90,7 @@ def print_footer(string, string2=False, border="=", width=48):
 
     _print_text(string)
 
-    if isinstance(string2, str):
+    if isinstance(string2, basestring):
         Epson.control('LF')
         Epson.control('LF')
         _print_text(string2)
@@ -93,49 +109,55 @@ def print_footer(string, string2=False, border="=", width=48):
 
 
 
-parser = argparse.ArgumentParser()
+# parser = argparse.ArgumentParser()
 
-parser.add_argument("body")
-parser.add_argument("--header1")
-parser.add_argument("--header2")
-parser.add_argument("--headerimgpath")
-parser.add_argument("--footer1")
-parser.add_argument("--footer2")
+# parser.add_argument("body")
+# parser.add_argument("--header1")
+# parser.add_argument("--header2")
+# parser.add_argument("--headerimgpath")
+# parser.add_argument("--footer1")
+# parser.add_argument("--footer2")
 
-args = parser.parse_args()
+# args = parser.parse_args()
 
-Epson = printer.Usb(0x04b8, 0x0e15)
 
-if args.header1:
-    print_header(args.header1, string2=stringlist(args.header2), imgpath=args.headerimgpath)
-
-print_body(args.body)
-
-if args.footer1:
-    print_footer(args.footer1, string2=stringlist(args.footer2))
+app = Flask(__name__)
 
 
 
-#======================================
-#Testing calls
-#======================================
+@app.route('/printer', methods=['POST'])
+def api_printer():
+    data = request.json
 
-# string4 = "Fertozobb kobanyak tangoharmonikak szennyezodes mutok apanazs vakulasig gyilkossag trombitamuveszek bracsak egymilliard kocsagok kavedaralo magikus tamado alakkent gorkorcsolyak delutani kenyelem legcsevegobb. Borogatasok vasut atkelo legeslegduhosebb Hermesz sajto fahejfai muzeum indoeuropai holdvilag kopenyek kankanok nem beszelek angolul bordas hatvany hetvennegy allami differencialgeometria sargallik melirozas."
+    print(type(data['body']))
 
-# helpstring = 'Nyissatok ki az aktataskat. Onnantol mar konnyu lesz.'
+    if 'header' in data:
+        header = data['header']
+    if 'body' in data:
+        body = data['body']
+    if 'footer' in data:
+        footer = data['footer']
 
-# stringlong = 'Remaining time: 0 months 0 days 0 hours 43 minutes'
+    if header:
+        if 'text2' in header:
+            print_header(header['text'], string2=header['text2'], imgpath='img/darpa-logo.gif')
+        else:
+            print_header(header['text'], imgpath='img/darpa-logo.gif')
 
-# stringshort = 'Project PROMETHEUS'
-
-# footerstring = 'www.trap.hu'
-
-# lineslist = ['Time until impact:', '0 months 0 days 0 hours 43 minutes']
-
-# numberlines = 'abcd efgh ijkl mnop qrst uvwx yz abcd efgh ijkl mnop qrst uvwx yz abcd efgh ijkl mnop qrst uvwx yz abcd efgh ijkl mnop qrst uvwx yz'
+    print_body(body)
 
 
-# print_header(stringshort, 'img/darpa-logo.gif', string2=lineslist)
-# print_body(helpstring)
-# print_footer(footerstring)
-Epson.cut()
+    if footer:
+        if 'text2' in footer:
+            print_footer(footer['text'], string2=footer['text2'])
+        else:
+            print_footer(footer['text'])
+
+    Epson.cut()
+
+    resp = jsonify(operation='succesful')
+    resp.status_code = 200
+    return resp
+
+if __name__ == '__main__':
+    app.run(debug=True)
