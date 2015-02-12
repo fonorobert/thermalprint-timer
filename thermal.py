@@ -9,6 +9,14 @@ from flask import Flask, request, jsonify
 
 Epson = printer.Usb(0x04b8, 0x0e15)
 
+
+def stringlist(string, sep='|||'):
+    if string is None:
+        return None
+    else:
+        return string.split(sep)
+
+
 def linebreak(string, charlimit=48):
     if len(string) < charlimit:
         return string
@@ -36,13 +44,6 @@ def _print_text(string, width=48):
 def _print_img(imgpath):
     Epson.image(imgpath)
     Epson.control('LF')
-
-
-def stringlist(string, sep='|||'):
-    if string is None:
-        return None
-    else:
-        return string.split(sep)
 
 
 def print_header(string, imgpath=None, string2=False, border="=*=|", width=48):
@@ -140,7 +141,7 @@ def api_printer():
 
     if header:
         if 'text2' in header:
-            print_header(header['text'], string2=header['text2'], imgpath='img/darpa-logo.gif')
+            print_header(header['text'], string2=stringlist(header['text2']), imgpath='img/darpa-logo.gif')
         else:
             print_header(header['text'], imgpath='img/darpa-logo.gif')
 
@@ -149,7 +150,7 @@ def api_printer():
 
     if footer:
         if 'text2' in footer:
-            print_footer(footer['text'], string2=footer['text2'])
+            print_footer(footer['text'], string2=stringlist(footer['text2']))
         else:
             print_footer(footer['text'])
 
