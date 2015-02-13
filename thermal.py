@@ -12,33 +12,83 @@ from flask import Flask, request, jsonify
 Epson = printer.Usb(0x04b8, 0x0e15)
 
 remaining = 60
+running = False
+
+rem_lock = threading.Lock()
+run_lock = threading.Lock()
+e_running = threading.Event()
 
 
 class TimerThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
-    def setglobal(self, value):
-        global remaining
-        remaining = value
+    def setremaining(self, value):
+        global rem_lock
+        with rem_lock:
+            global remaining
+            remaining = value
 
-    def getglobal(self):
+    def getremaining(self):
         global remaining
         return remaining
 
+    def getrunning(self):
+        global running
+        return running
+
     def run(self):
-        remaining = self.getglobal()
+        remaining = self.getremaining()
         while remaining > 0:
-            self.setglobal(remaining - 1)
-            remaining = self.getglobal()
-            #print(self.getglobal())
-            time.sleep(1)
+            if e_running.isSet():
+                self.setremaining(remaining - 1)
+                remaining = self.getremaining()
+                time.sleep(1)
+            else:
+                time.sleep(1)
+        with run_lock:
+            global running
+            running = False
         return
+
+t = TimerThread()
+t.setDaemon(True)
+t.start()
 
 
 def getremaining():
         global remaining
         return remaining
+
+
+def setremaining(value):
+        global rem_lock
+        with rem_lock:
+            global remaining
+            remaining = value
+
+
+def getrunning():
+    global running
+    return running
+
+
+def timerstart():
+    global e_running
+    e_running.set()
+    global running
+    global run_lock
+    with run_lock:
+        running = True
+
+
+def timerstop():
+    global e_running
+    e_running.clear()
+    global running
+    global run_lock
+    with run_lock:
+        running = False
 
 
 def stringlist(string, sep='|||'):
@@ -141,7 +191,6 @@ def print_footer(string, string2=False, border="=", width=48):
 
 
 app = Flask(__name__)
-t = TimerThread()
 
 
 @app.route('/printer', methods=['POST'])
@@ -183,8 +232,31 @@ def api_printer():
     resp.status_code = 200
     return resp
 
-t.setDaemon(True)
-t.start()
+@app.route('/timer', methods = ['GET', 'POST'])
+def api_timer():
+    if request.method == 'GET':
+        resp = jsonify(remaining=getremaining(), running=getrunning())
+        resp.status_code = 200
+        return resp
+
+    if request.method == 'POST':
+        data = request.json
+
+        if data['action'] == 'stop':
+            timerstop()
+        elif data['action'] == 'start':
+            if 'remaining' in data:
+                setremaining(data['remaining'])
+                timerstart()
+            else:
+                timerstart()
+        elif data['action'] == 'set':
+            setremaining(data['remaining'])
+
+        resp = jsonify(operation='succesful')
+        resp.status_code = 200
+        return resp
+
 
 if __name__ == '__main__':
     app.run(debug=True)
