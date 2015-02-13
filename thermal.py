@@ -109,21 +109,7 @@ def print_footer(string, string2=False, border="=", width=48):
     Epson.control('LF')
 
 
-
-# parser = argparse.ArgumentParser()
-
-# parser.add_argument("body")
-# parser.add_argument("--header1")
-# parser.add_argument("--header2")
-# parser.add_argument("--headerimgpath")
-# parser.add_argument("--footer1")
-# parser.add_argument("--footer2")
-
-# args = parser.parse_args()
-
-
 app = Flask(__name__)
-
 
 
 @app.route('/printer', methods=['POST'])
@@ -134,19 +120,25 @@ def api_printer():
 
     if 'header' in data:
         header = data['header']
+    else:
+        header = False
     if 'body' in data:
         body = data['body']
+    else:
+        body = False
     if 'footer' in data:
         footer = data['footer']
+    else:
+        footer = False
 
     if header:
         if 'text2' in header:
-            print_header(header['text'], string2=stringlist(header['text2']), imgpath='img/darpa-logo.gif')
+            print_header(header['text'], string2=stringlist(header['text2']),
+                         imgpath='img/darpa-logo.gif')
         else:
             print_header(header['text'], imgpath='img/darpa-logo.gif')
 
     print_body(body)
-
 
     if footer:
         if 'text2' in footer:
