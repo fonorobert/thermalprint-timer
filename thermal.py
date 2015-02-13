@@ -3,11 +3,42 @@
 import sys
 sys.path.append('python-escpos')
 from escpos import *
+import threading
+import time
 #from utility import linebreak
 
 from flask import Flask, request, jsonify
 
 Epson = printer.Usb(0x04b8, 0x0e15)
+
+remaining = 60
+
+
+class TimerThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def setglobal(self, value):
+        global remaining
+        remaining = value
+
+    def getglobal(self):
+        global remaining
+        return remaining
+
+    def run(self):
+        remaining = self.getglobal()
+        while remaining > 0:
+            self.setglobal(remaining - 1)
+            remaining = self.getglobal()
+            #print(self.getglobal())
+            time.sleep(1)
+        return
+
+
+def getremaining():
+        global remaining
+        return remaining
 
 
 def stringlist(string, sep='|||'):
@@ -110,13 +141,12 @@ def print_footer(string, string2=False, border="=", width=48):
 
 
 app = Flask(__name__)
+t = TimerThread()
 
 
 @app.route('/printer', methods=['POST'])
 def api_printer():
     data = request.json
-
-    print(type(data['body']))
 
     if 'header' in data:
         header = data['header']
@@ -139,6 +169,7 @@ def api_printer():
             print_header(header['text'], imgpath='img/darpa-logo.gif')
 
     print_body(body)
+    print_body(str(getremaining()))
 
     if footer:
         if 'text2' in footer:
@@ -151,6 +182,9 @@ def api_printer():
     resp = jsonify(operation='succesful')
     resp.status_code = 200
     return resp
+
+t.setDaemon(True)
+t.start()
 
 if __name__ == '__main__':
     app.run(debug=True)
