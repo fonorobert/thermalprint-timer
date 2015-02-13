@@ -11,7 +11,7 @@ from flask import Flask, request, jsonify
 
 Epson = printer.Usb(0x04b8, 0x0e15)
 
-remaining = 60
+remaining = 1800
 running = False
 
 rem_lock = threading.Lock()
@@ -45,10 +45,12 @@ class TimerThread(threading.Thread):
                 remaining = self.getremaining()
                 time.sleep(1)
             else:
-                time.sleep(1)
+                e_running.wait()
         with run_lock:
             global running
             running = False
+        with open('testrun.txt', 'a') as f:
+            f.write('30 min test ended at' + str(time.localtime()))
         return
 
 t = TimerThread()
@@ -78,6 +80,8 @@ def timerstart():
     e_running.set()
     global running
     global run_lock
+    with open('testrun.txt', 'a') as f:
+        f.write('30 min test started at' + str(time.localtime()))
     with run_lock:
         running = True
 
