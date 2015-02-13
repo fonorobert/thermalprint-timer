@@ -49,8 +49,8 @@ class TimerThread(threading.Thread):
         with run_lock:
             global running
             running = False
-        with open('testrun.txt', 'a') as f:
-            f.write('30 min test ended at' + str(time.localtime()))
+        # with open('testrun.txt', 'a') as f:
+        #     f.write('30 min test ended at' + str(time.localtime()))
         return
 
 t = TimerThread()
@@ -80,8 +80,8 @@ def timerstart():
     e_running.set()
     global running
     global run_lock
-    with open('testrun.txt', 'a') as f:
-        f.write('30 min test started at' + str(time.localtime()))
+    # with open('testrun.txt', 'a') as f:
+    #     f.write('30 min test started at' + str(time.localtime()))
     with run_lock:
         running = True
 
@@ -236,7 +236,8 @@ def api_printer():
     resp.status_code = 200
     return resp
 
-@app.route('/timer', methods = ['GET', 'POST'])
+
+@app.route('/timer', methods=['GET', 'POST'])
 def api_timer():
     if request.method == 'GET':
         resp = jsonify(remaining=getremaining(), running=getrunning())
@@ -248,16 +249,19 @@ def api_timer():
 
         if data['action'] == 'stop':
             timerstop()
+            resp = jsonify(remaining=getremaining(), running=getrunning())
         elif data['action'] == 'start':
             if 'remaining' in data:
                 setremaining(data['remaining'])
                 timerstart()
+                resp = jsonify(remaining=data['remaining'], running=getrunning())
             else:
                 timerstart()
+                resp = jsonify(remaining=getremaining(), running=getrunning())
         elif data['action'] == 'set':
             setremaining(data['remaining'])
+            resp = jsonify(remaining=data['remaining'], running=getrunning())
 
-        resp = jsonify(operation='succesful')
         resp.status_code = 200
         return resp
 
