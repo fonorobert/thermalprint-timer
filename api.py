@@ -30,27 +30,34 @@ class TimerThread(threading.Thread):
             remaining = value
 
     def getremaining(self):
-        global remaining
-        return remaining
+        global rem_lock
+        with rem_lock:
+            global remaining
+            return remaining
 
     def getrunning(self):
-        global running
-        return running
-
-    def run(self):
-        remaining = self.getremaining()
-        while remaining > 0:
-            if e_running.isSet():
-                self.setremaining(remaining - 1)
-                remaining = self.getremaining()
-                time.sleep(1)
-            else:
-                e_running.wait()
+        global run_lock
         with run_lock:
             global running
-            running = False
-        # with open('testrun.txt', 'a') as f:
-        #     f.write('30 min test ended at' + str(time.localtime()))
+            return running
+
+    def run(self):
+        while True:
+            remaining = self.getremaining()
+            while remaining > 0:
+                if e_running.isSet():
+                    remaining = self.getremaining()
+                    self.setremaining(remaining - 1)
+                    remaining = self.getremaining()
+                    time.sleep(1)
+                else:
+                    e_running.wait()
+            with run_lock:
+                global running
+                running = False
+                e_running.clear()
+            # with open('testrun.txt', 'a') as f:
+            #     f.write('30 min test ended at' + str(time.localtime()))
         return
 
 t = TimerThread()
@@ -59,8 +66,10 @@ t.start()
 
 
 def getremaining():
-        global remaining
-        return remaining
+        global rem_lock
+        with rem_lock:
+            global remaining
+            return remaining
 
 
 def setremaining(value):
@@ -71,8 +80,10 @@ def setremaining(value):
 
 
 def getrunning():
-    global running
-    return running
+    global run_lock
+    with run_lock:
+        global running
+        return running
 
 
 def timerstart():
@@ -254,13 +265,13 @@ def api_timer():
             if 'remaining' in data:
                 setremaining(data['remaining'])
                 timerstart()
-                resp = jsonify(remaining=data['remaining'], running=getrunning())
+                resp = jsonify(remaining=getremaining(), running=getrunning())
             else:
                 timerstart()
                 resp = jsonify(remaining=getremaining(), running=getrunning())
         elif data['action'] == 'set':
             setremaining(data['remaining'])
-            resp = jsonify(remaining=data['remaining'], running=getrunning())
+            resp = jsonify(remaining=getremaining(), running=getrunning())
 
         resp.status_code = 200
         return resp
