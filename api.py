@@ -9,7 +9,16 @@ import time
 
 from flask import Flask, request, jsonify
 
-Epson = printer.Usb(0x04b8, 0x0e15)
+printer_connected = False
+
+while printer_connected is False:
+    try:
+        Epson = printer.Usb(0x04b8, 0x0e15)
+    except:
+        time.sleep(5)
+    else:
+        printer_connected = True
+
 
 remaining = 1800
 running = False
@@ -233,7 +242,6 @@ def api_printer():
             print_header(header['text'], imgpath='img/darpa-logo.gif')
 
     print_body(body)
-    print_body(str(getremaining()))
 
     if footer:
         if 'text2' in footer:
