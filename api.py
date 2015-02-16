@@ -20,7 +20,7 @@ while printer_connected is False:
         printer_connected = True
 
 
-remaining = 1800
+remaining = 3600
 running = False
 
 rem_lock = threading.Lock()
@@ -237,9 +237,9 @@ def api_printer():
     if header:
         if 'text2' in header:
             print_header(header['text'], string2=stringlist(header['text2']),
-                         imgpath='img/darpa-logo.gif')
+                         imgpath='img/trap.png')
         else:
-            print_header(header['text'], imgpath='img/darpa-logo.gif')
+            print_header(header['text'], imgpath='img/trap.png')
 
     print_body(body)
 
