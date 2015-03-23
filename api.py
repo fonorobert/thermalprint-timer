@@ -10,11 +10,13 @@ import time
 from flask import Flask, request, jsonify
 
 printer_connected = False
+tries = 0
 
-while printer_connected is False:
+while printer_connected is False and tries < 3:
     try:
         Epson = printer.Usb(0x04b8, 0x0e15)
     except:
+	tries +=1
         time.sleep(5)
     else:
         printer_connected = True
